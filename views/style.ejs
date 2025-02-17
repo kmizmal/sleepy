@@ -1,6 +1,4 @@
-/*
-WARNING: 不要使用格式化代码 (本文件内) / DON'T USE CODE FORMATTER IN THIS FILE
-*/
+
 rt {
     font-size: 0.6em;
 }
@@ -10,7 +8,7 @@ a {
 }
 
 body {
-    background: url('{{ bg }}') no-repeat center center fixed; /* 此处不要展开 */
+    background: url(<%= background_img %>) no-repeat center center fixed;
     background-size: cover;
 }
 
@@ -23,7 +21,7 @@ body {
     box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
     text-align: center;
     font-size: 1.1em;
-    opacity: {{ alpha }}; /* 格式化后注意此处 */
+    opacity:<%= alpha %>;
 }
 
 #last-updated {
@@ -47,8 +45,6 @@ body {
     }
 }
 
-/* 以下为各种状态的颜色 */
-
 .sleeping {
     color: gray;
 }
@@ -61,7 +57,6 @@ body {
     color: red;
 }
 
-/* 不建议删除上面的 .sleeping .awake .error 三个默认颜色 */
 
 #hitokoto_text {
     color: rgba(237, 202, 242, 0.719);
