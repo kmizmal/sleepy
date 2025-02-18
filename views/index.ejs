@@ -9,7 +9,24 @@
     </title>
     <meta name="description" content="<%= user %>'s Online Status Page">
     <link rel="stylesheet" href="/style.css">
-    <link rel="icon" href="/static/zmal.png" type="image/x-icon">
+    <link rel="icon" href="zmal.png" type="image/x-icon">
+    <style>
+        body {
+            background: url('<%= background_img %>') no-repeat center center fixed;
+        }
+
+        .card {       
+            background-color: aliceblue;
+            border-radius: 30px;
+            padding: 2rem 1rem;
+            margin: 1rem auto;
+            width: 40%;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+            text-align: center;
+            font-size: 1.1em;
+            opacity: <%= alpha %>;
+        }
+    </style>
 </head>
 
 <body>
@@ -26,7 +43,7 @@
                 document.getElementById('status').classList.add(data.status_color);
 
                 const statusContainer = document.getElementById('device-status'); // 获取 div
-                statusContainer.innerHTML = ''; // 清空 div
+                statusContainer.innerHTML = '[设备状态列表]'; // 清空 div
                 // 确保 device 存在并是对象
                 if (data.device && typeof data.device === 'object') {
                     Object.entries(data.device).forEach(([key, value]) => {
@@ -48,30 +65,23 @@
             <h3><i><b>
                         <%= user %>'s
                     </b></i> Status:<br> <!-- 用户状态 -->
-                <a id="status" style="font-size: 1.2em;">
-                    <%= status_name %>
-                </a> <!-- 状态名称 -->
+                <a id="status" style="font-size: 1.2em;"></a> <!-- 状态名称 -->
             </h3>
-            <p id="additional-info" style="font-size: 1em;">
-                <%= status_desc %>
-            </p> <!-- 状态描述 -->
-            <div id="device-status">[设备状态列表]</div> <!-- 设备状态列表 -->
-            <p id="last-updated">最后更新: <%= last_updated %>
-            </p> <!-- 最后更新时间 -->
+            <p id="additional-info" style="font-size: 1em;"></p> <!-- 状态描述 -->
+            <div id="device-status"></div> <!-- 设备状态列表 -->
+            <p id="last-updated"></p> <!-- 最后更新时间 -->
         </div>
 
         <div class="card" id="more_text">
             <div>
                 <p id="hitokoto">
-                    <a href="#" id="hitokoto_text">
-                        <%= hitokoto %>
-                    </a> <!-- 一言文本 -->
+                    <a href="#" id="hitokoto_text"></a>
                 </p>
                 <script>
                     const hitokoto_enabled = '<%= hitokoto %>';
                     const hitokotoElement = document.querySelector('#hitokoto_text');
-                    if (hitokoto_enabled) {
-                        console.log('Hitokoto enabled'); // 一言启用
+                    if (hitokoto_enabled==true) {
+                        // console.log('Hitokoto enabled'); // 一言启用
                         fetch('https://v1.hitokoto.cn')
                             .then(response => response.json())
                             .then(data => {
@@ -79,9 +89,6 @@
                                 hitokotoElement.innerText = data.hitokoto;
                             })
                             .catch(console.error);
-                    } else {
-                        console.log('Hitokoto disabled'); // 一言禁用
-                        hitokotoElement.innerText = '';
                     }
                 </script>
             </div>
@@ -101,7 +108,7 @@
         </div>
     </div>
     <% if (canvas) { %>
-        <script src="/static/canvas.js" defer></script> <!-- 如果canvas为true，加载canvas.js -->
+        <script src="/canvas.js" defer></script> <!-- 如果canvas为true，加载canvas.js -->
         <% } %>
 </body>
 

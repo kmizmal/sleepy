@@ -43,8 +43,7 @@ function updateStatus(updatedAt,deviceArray) {
 app.set('view engine', 'ejs');
 
 // 提供静态文件
-app.use('/static', express.static('public'));
-
+app.use(express.static('public'));
 // 渲染首页
 app.get('/', (req, res) => {
     res.render('index', {
@@ -53,21 +52,24 @@ app.get('/', (req, res) => {
         hitokoto: config.hitokoto,
         repo: config.repo,
         canvas: config.canvas,
-        status_name: '正常',
-        status_desc: '服务器正常运行',
-        last_updated: new Date().toLocaleString(),
-        status_color: 'green'
-    });
-});
-//为什么css也要用ejs渲染啊啊啊啊啊
-app.get('/style.css', (req, res) => {
-    res.setHeader('Content-Type', 'text/css');
-    res.render('style', {
         background_img: config.img,
-        alpha: config.alpha
+        alpha: config.alpha,
     });
 });
 
+app.get('/:username', (req, res) => {
+    const username = req.params.username; // 获取 URL 中的参数
+    res.render('index', {
+        port: config.port,
+        user: username,
+        hitokoto: config.hitokoto,
+        repo: config.repo,
+        canvas: config.canvas,
+        background_img: config.img,
+        alpha: config.alpha,
+    });
+    // logger.info(`访问用户 ${username}`);
+});
 
 // 启动 HTTP 和 WebSocket 服务
 const port = config.port;

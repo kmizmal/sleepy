@@ -7,23 +7,6 @@ a {
     text-decoration: none;
 }
 
-body {
-    background: url(<%= background_img %>) no-repeat center center fixed;
-    background-size: cover;
-}
-
-.card {
-    background-color: aliceblue;
-    border-radius: 30px;
-    padding: 2rem 1rem;
-    margin: 1rem auto;
-    width: 40%;
-    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-    text-align: center;
-    font-size: 1.1em;
-    opacity:<%= alpha %>;
-}
-
 #last-updated {
     font-size: 0.9em;
 }

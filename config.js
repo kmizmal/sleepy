@@ -25,5 +25,6 @@ config.img = process.env.IMG;
 config.alpha = process.env.ALPHA;
 config.db_url = process.env.DB_URL;
 
-module.exports = config;  // 导出 config 对象
 
+module.exports = config;  // 导出 config 对象
+// console.log('配置文件加载成功',config);

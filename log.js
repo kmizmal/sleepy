@@ -1,5 +1,10 @@
 const winston = require('winston');
-const config = require('./config');
+
+// 延迟 require 避免循环依赖
+function getLogLevel() {
+    return require('./config').logLevel;
+}
+
 const logFormat = winston.format.combine(
     winston.format.timestamp({ format: 'YYYY-MM-DD HH:mm:ss' }),
     winston.format.colorize({ all: true }),  // 让所有部分都带上颜色
@@ -9,16 +14,16 @@ const logFormat = winston.format.combine(
 );
 
 const logger = winston.createLogger({
-    level: config.logLevel,
+    level: getLogLevel(),  // 这样就不会在 require 时报错
     format: logFormat,
     transports: [
-        // 输出到控制台
         new winston.transports.Console({ format: logFormat }),
-        // 输出到文件
         new winston.transports.File({ filename: 'app.log' })
     ]
 });
-module.exports = logger;  // 导出 logger 对象
+
+module.exports = logger;
+// 导出 logger 对象
 // 使用日志
 // logger.info('This is an info message');
 // logger.error('This is an error message');
