@@ -24,6 +24,17 @@
                 document.getElementById('last-updated').innerText = "最后更新: " + data.last_updated;
                 document.getElementById('status').classList = '';
                 document.getElementById('status').classList.add(data.status_color);
+
+                const statusContainer = document.getElementById('device-status'); // 获取 div
+                statusContainer.innerHTML = ''; // 清空 div
+                // 确保 device 存在并是对象
+                if (data.device && typeof data.device === 'object') {
+                    Object.entries(data.device).forEach(([key, value]) => {
+                        const p = document.createElement('p'); // 创建 <p> 元素
+                        p.innerText = `${key}: ${value}`; // 设置文本内容
+                        statusContainer.appendChild(p); // 插入到 div.device-status 内部
+                    });
+                }
             } catch (error) {
                 console.error('WebSocket消息解析失败:', error);
             }
@@ -44,7 +55,7 @@
             <p id="additional-info" style="font-size: 1em;">
                 <%= status_desc %>
             </p> <!-- 状态描述 -->
-            <p id="device-status">[设备状态列表]</p> <!-- 设备状态列表 -->
+            <div id="device-status">[设备状态列表]</div> <!-- 设备状态列表 -->
             <p id="last-updated">最后更新: <%= last_updated %>
             </p> <!-- 最后更新时间 -->
         </div>

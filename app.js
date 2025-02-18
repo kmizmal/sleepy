@@ -30,12 +30,13 @@ wss.on('connection', ws => {
     //     }));
     // }, 10000);
 });
-function updateStatus() {
+function updateStatus(updatedAt,deviceArray) {
     wss.send(JSON.stringify({
         status_name: "在线",
         status_desc: "服务器一切正常",
-        last_updated: new Date().toLocaleString('zh-CN', { timeZone: 'Asia/Shanghai', year: 'numeric', month: 'long', day: 'numeric', hour: '2-digit', minute: '2-digit', second: '2-digit' }),
-        status_color: "green"
+        last_updated: updatedAt,
+        status_color: "green",
+        device: deviceArray
     }));
 }
 // 配置 EJS 模板引擎
