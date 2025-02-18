@@ -23,6 +23,7 @@ config.repo = process.env.REPO;
 config.canvas = process.env.CANVAS;
 config.img = process.env.IMG;
 config.alpha = process.env.ALPHA;
+config.db_url = process.env.DB_URL;
 
 module.exports = config;  // 导出 config 对象
 

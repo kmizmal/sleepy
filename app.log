@@ -1,0 +1,17 @@
+[2025-02-18 10:13:20][[32minfo[39m] [32m🚀 Server running at http://127.0.0.1:3000[39m
+[2025-02-18 10:13:20][[32minfo[39m] [32m数据库连接成功[39m
+[2025-02-18 10:13:20][[32minfo[39m] [32m数据库同步成功[39m
+[2025-02-18 10:16:43][[32minfo[39m] [32m🚀 Server running at http://127.0.0.1:3000[39m
+[2025-02-18 10:16:43][[32minfo[39m] [32mExecuting (default): SELECT name FROM sqlite_master WHERE type='table' AND name='Users';[39m
+[2025-02-18 10:16:43][[32minfo[39m] [32mExecuting (default): SELECT 1+1 AS result[39m
+[2025-02-18 10:16:43][[32minfo[39m] [32mExecuting (default): PRAGMA INDEX_LIST(`Users`)[39m
+[2025-02-18 10:16:43][[32minfo[39m] [32m数据库连接成功[39m
+[2025-02-18 10:16:43][[32minfo[39m] [32mExecuting (default): PRAGMA INDEX_INFO(`sqlite_autoindex_Users_1`)[39m
+[2025-02-18 10:16:43][[32minfo[39m] [32m数据库同步成功[39m
+[2025-02-18 10:17:23][[32minfo[39m] [32m🚀 Server running at http://127.0.0.1:3000[39m
+[2025-02-18 10:17:23][[32minfo[39m] [32m数据库连接成功[39m
+[2025-02-18 10:17:23][[32minfo[39m] [32m数据库同步成功[39m
+[2025-02-18 10:22:13][[32minfo[39m] [32m🚀 Server running at http://127.0.0.1:3000[39m
+[2025-02-18 10:22:14][[32minfo[39m] [32m数据库连接成功[39m
+[2025-02-18 10:22:25][[32minfo[39m] [32m🚀 Server running at http://127.0.0.1:3000[39m
+[2025-02-18 10:22:25][[32minfo[39m] [32m数据库连接成功[39m
