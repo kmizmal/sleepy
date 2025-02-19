@@ -90,7 +90,6 @@ if (result && result !== false) {
 });
 
 // 启动 HTTP 和 WebSocket 服务
-const port = config.port;
-server.listen(port, config.host, () => {
-    logger.info(`🚀 Server running at http://${config.host}:${port}`);
+server.listen(config.port, config.host, () => {
+    logger.info(`🚀 Server running at http://${config.host}:${config.port}`);
 });
