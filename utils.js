@@ -1,23 +1,33 @@
 const bcrypt = require('bcrypt');
+const db = require('./db');
+const WebSocket = require('ws');
 
-// 用于更新状态的函数
-function updateStatus(updatedAt, deviceArray) {
-    ws.send(JSON.stringify({
-        status_name: "在线",
-        status_desc: "服务器一切正常",
-        last_updated: updatedAt,
-        status_color: "green",
-        device: deviceArray
-    }));
+async function updateStatus(ws, updatedAt, deviceArray) {
+  ws.send(JSON.stringify({
+    status_name: "在线",
+    status_desc: "服务器一切正常",
+    last_updated: updatedAt,
+    status_color: "green",
+    device: deviceArray
+  }));
 }
 
+let usersCache = []; // 用于缓存查询结果的全局变量
+
 // 获取用户数据（从缓存或数据库）
-async function GetSQL() {
+async function GetUser() {
+  console.log('db:', db);  // 打印 db 对象，确保它已被正确初始化
+  console.log('db.User:', db.User);  // 打印 db.User，确保模型已加载
+
   if (usersCache.length === 0) {
-    // 如果缓存为空，则从数据库查询并保存到缓存
-    const users = await User.findAll(); // 获取所有用户
-    usersCache = users.map(user => user.toJSON()); // 将结果保存到全局变量
-    console.log('Data fetched from database:', usersCache);
+    try {
+      const users = await db.User.findAll(); // 获取所有用户
+      usersCache = users.map(user => user.toJSON()); // 将结果保存到全局变量
+      console.log('Data fetched from database:', usersCache);
+    } catch (error) {
+      console.error('Error fetching users from database:', error);
+      throw new Error('Failed to fetch users from database');
+    }
   } else {
     console.log('Using cached data:', usersCache);
   }
@@ -25,32 +35,32 @@ async function GetSQL() {
   return usersCache;
 }
 
+
 // 用于判断用户是否存在，如果不存在就创建用户
 async function UserIfNotExist(username, secret) {
-  const usersData = await GetSQL(); // 获取用户数据（缓存或数据库）
+  try {
+    const usersData = await GetUser(); // 获取用户数据（缓存或数据库）
 
-  // 检查用户名是否存在
-  const existingUser = usersData.find(user => user.name === username);
+    // 检查用户名是否存在
+    const existingUser = usersData.find(user => user.name === username);
 
-  if (existingUser) {
-    // 用户存在，进行密码比对
-    const secretMatch = await bcrypt.compare(secret, existingUser.secret);
-    
-    if (secretMatch) {
-      console.log('secret is correct');
-      return true; // 密码正确，返回 true
+    if (existingUser) {
+      // 用户存在，进行密码比对
+      const secretMatch = await bcrypt.compare(secret, existingUser.secret);
+
+      if (secretMatch) {
+        console.log('secret is correct');
+        return true; // 密码正确，返回 true
+      } else {
+        console.log('Incorrect secret');
+        return false; // 密码不正确，返回 false
+      }
     } else {
-      console.log('Incorrect secret');
-      return false; // 密码不正确，返回 false
-    }
-  } else {
-    // 用户不存在，创建新用户
-    try {
-      // 加密密码
+      // 用户不存在，创建新用户
       const hashedsecret = await bcrypt.hash(secret, 10);
 
       // 创建新用户
-      const newUser = await User.create({
+      const newUser = await db.User.create({
         name: username,
         secret: hashedsecret // 保存加密后的密码
       });
@@ -60,14 +70,19 @@ async function UserIfNotExist(username, secret) {
 
       console.log('User created:', newUser.toJSON());
       return newUser.updatedAt; // 成功返回 updatedAt 字段
-    } catch (error) {
-      console.error('Error creating user:', error);
-      return false; // 如果创建失败，返回 false
     }
+  } catch (error) {
+    console.error('Error in UserIfNotExist function:', error);
+    return false; // 出现错误时返回 false
   }
 }
 
+async function SetDevice(device, ShowName, userid) {
+  // 这个函数目前没有实现
+}
+
 module.exports = {
+  GetUser,
   updateStatus,
   UserIfNotExist
 };

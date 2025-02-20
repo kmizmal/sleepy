@@ -9,7 +9,7 @@
     </title>
     <meta name="description" content="<%= user %>'s Online Status Page">
     <link rel="stylesheet" href="/style.css">
-    <link rel="icon" href="zmal.png" type="image/x-icon">
+    <link rel="icon" href="/zmal.png" type="image/x-icon">
     <style>
         body {
             background: url('<%= background_img %>') no-repeat center center fixed;
@@ -33,8 +33,6 @@
     <script>
         const protocol = location.protocol === 'https:' ? 'wss' : 'ws';
         const wsUrl = `${protocol}://${location.host}`;
-.       //const socket = new WebSocket(wsUrl);
-        //const ws = new WebSocket(`ws://localhost:<%= port %>`);
         const ws = new WebSocket(wsUrl);
         ws.onmessage = (event) => {
             try {
