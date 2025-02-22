@@ -6,26 +6,18 @@ const logger = require('./log');
 const utils = require('./utils');
 const db = require('./db');
 
+// 异步获取 db 实例
+async function fetchDbInstance() {
+    const dbInstance = await db(); // 等待 db 初始化完成
+    return dbInstance;
+  }
+
 // 初始化应用
 const app = express();
 const server = http.createServer(app);
 const wss = new WebSocket.Server({ server });
 
 let usersCache = [];
-
-// 异步启动函数
-async function startServer() {
-    try {
-      // 启动服务器
-      server.listen(config.port, config.host, () => {
-        logger.info(`🚀 Server running at http://${config.host}:${config.port}`);
-        fetchUsersCache(); // 安全调用
-      });
-    } catch (err) {
-      logger.error('🔥 服务器启动失败', err);
-      process.exit(1);
-    }
-  }
 
 // 处理 WebSocket 连接
 wss.on('connection', ws => {
@@ -50,7 +42,6 @@ wss.on('connection', ws => {
     // 断开连接时清理资源
 
 });
-
 
 // 获取用户数据（从缓存或数据库）
 async function fetchUsersCache() {
@@ -82,7 +73,7 @@ app.get('/', (req, res) => {
 });
 
 // 渲染用户主页
-app.get('/:username', (req, res) => {
+app.get('/:username', async (req, res) => {
     const username = req.params.username; // 获取 URL 中的参数
     const ip = req.headers['x-forwarded-for'] || req.connection.remoteAddress;
     res.render('index', {
@@ -94,6 +85,11 @@ app.get('/:username', (req, res) => {
         background_img: config.img,
         alpha: config.alpha,
     });
+    
+    // const dbInstance = await fetchDbInstance(); // 获取 db 实例
+    // const devicesStatus = await dbInstance.getDevicesStatus(username); // 调用 getDevicesStatus
+    // console.log(devicesStatus);
+    
 });
 
 // 设置设备信息并处理用户和设备
@@ -131,6 +127,18 @@ app.get('/:username/device/set', async (req, res) => {
         res.status(500).send('Internal Server Error');
     }
 });
-
+// 异步启动函数
+async function startServer() {
+    try {
+      // 启动服务器
+      server.listen(config.port, config.host, () => {
+        logger.info(`🚀 Server running at http://${config.host}:${config.port}`);
+        fetchUsersCache(); // 安全调用
+      });
+    } catch (err) {
+      logger.error('🔥 服务器启动失败', err);
+      process.exit(1);
+    }
+  }
 // 启动服务
 startServer();

@@ -2,40 +2,44 @@ const { Sequelize } = require('sequelize');
 const config = require('./config');
 const logger = require('./log');
 const db = {};
-function setupDatabaseConnection() {
-  const dbUrl = config.db_url;
-  let sequelize;
 
+// 提取数据库连接字符串解析逻辑
+function parseDbUrl(dbUrl) {
   if (dbUrl.startsWith('sqlite:')) {
     const sqliteFilePath = dbUrl.replace('sqlite:', '');
-    sequelize = new Sequelize({
-      logging: (msg) => logger.debug(msg),
-      dialect: 'sqlite',
-      storage: sqliteFilePath,
-    });
-    logger.verbose('使用 SQLite 数据库');
-  } else if (dbUrl.startsWith('mysql://')) {
-    const mysqlUrl = new URL(dbUrl);
-    sequelize = new Sequelize(mysqlUrl.pathname.slice(1), mysqlUrl.username, mysqlUrl.password, {
-      logging: (msg) => logger.debug(msg),
-      host: mysqlUrl.hostname,
-      dialect: 'mysql',
-      port: mysqlUrl.port || 3306,
-    });
-    logger.verbose('使用 MySQL 数据库');
-  } else if (dbUrl.startsWith('postgres://')) {
-    const postgresUrl = new URL(dbUrl);
-    sequelize = new Sequelize(postgresUrl.pathname.slice(1), postgresUrl.username, postgresUrl.password, {
-      logging: (msg) => logger.debug(msg),
-      host: postgresUrl.hostname,
-      dialect: 'postgres',
-      port: postgresUrl.port || 5432,
-    });
-    logger.verbose('使用 PostgreSQL 数据库');
-  } else {
-    logger.error('DB_URL 格式错误');
-    process.exit(1);
+    return { dialect: 'sqlite', storage: sqliteFilePath };
   }
+  const url = new URL(dbUrl);
+  const config = {
+    host: url.hostname,
+    port: url.port || (url.protocol === 'mysql:' ? 3306 : 5432),
+    username: url.username,
+    password: url.password,
+    database: url.pathname.slice(1),
+  };
+  if (dbUrl.startsWith('mysql://')) {
+    config.dialect = 'mysql';
+  } else if (dbUrl.startsWith('postgres://')) {
+    config.dialect = 'postgres';
+  } else {
+    throw new Error('DB_URL 格式错误');
+  }
+  return config;
+}
+
+// 更新数据库连接的设置
+function setupDatabaseConnection() {
+  const dbUrl = config.db_url;
+  const dbConfig = parseDbUrl(dbUrl);
+  
+  const sequelize = new Sequelize({
+    logging: (msg) => logger.debug(msg),
+    ...dbConfig,
+  });
+  
+  const dialect = dbConfig.dialect === 'sqlite' ? 'SQLite' : dbConfig.dialect === 'mysql' ? 'MySQL' : 'PostgreSQL';
+  logger.verbose(`使用 ${dialect} 数据库`);
+  
   return sequelize;
 }
 
@@ -52,9 +56,6 @@ async function authenticateDatabase(sequelize) {
 
 // 定义模型
 function defineModels(sequelize) {
-  console.log('开始定义模型');
-
-  // 定义 User 模型
   db.User = sequelize.define('User', {
     userId: {
       type: Sequelize.INTEGER,
@@ -64,10 +65,10 @@ function defineModels(sequelize) {
     name: {
       type: Sequelize.STRING,
       allowNull: false,
+      unique: true,  //保证name唯一
     },
     email: {
       type: Sequelize.STRING,
-      unique: true,
       allowNull: true,
     },
     secret: {
@@ -81,12 +82,10 @@ function defineModels(sequelize) {
       allowNull: false,
     },
   }, {
-    tableName: 'users',  // 确保表名是 'users'
+    tableName: 'users',
     timestamps: true,
   });
-  console.log('User 模型已定义:', db.User);
 
-  // 定义 Device 模型
   db.Device = sequelize.define('Device', {
     device: {
       type: Sequelize.STRING,
@@ -101,51 +100,56 @@ function defineModels(sequelize) {
       type: Sequelize.STRING,
       allowNull: false,
     },
+    userId: {  // 显式添加 userId 字段作为外键
+      type: Sequelize.INTEGER,
+      allowNull: false,
+      references: {
+        model: db.User,  // 关联 User 模型
+        key: 'userId',   // 外键引用 User 表的 userId 字段
+      },
+    },
   }, {
     tableName: 'devices',
     timestamps: true,
   });
-  console.log('Device 模型已定义:', db.Device);
-  // 关系定义
+  // 定义关系
   db.User.hasMany(db.Device, { foreignKey: 'userId' });
   db.Device.belongsTo(db.User, { foreignKey: 'userId' });
 }
+
 // 同步数据库模型
 async function syncDatabase(sequelize) {
   try {
     await sequelize.sync({ alter: true, force: false });
-    console.log('数据库同步成功');
-    // 确保模型定义已生效
-    console.log('当前 db.User:', db.User);
-    console.log('当前 db.Device:', db.Device);
   } catch (err) {
-    console.error('数据库同步异常', err);
+    logger.error('数据库同步异常', err);//现在它一直会报 Validation error 修不好
   }
 }
+
 // 增加用户
 db.addUser = async (UserName) => {
   try {
-    // 查询用户是否已存在
-    const user = await db.User.findOne({ where: { name: UserName } });  // 使用 where 进行查询
-    if (user) throw new Error('用户已存在');  // 用户已存在，抛出错误
-
-    // 创建新用户
-    const newUser = await db.User.create({ name: UserName });  // 创建新用户时，确保字段名正确
+    const user = await db.User.findOne({ where: { name: UserName } });
+    if (user) throw new Error('用户已存在');
+    const newUser = await db.User.create({ name: UserName });
+    logger.info(`用户 ${UserName} 创建成功`);
     return newUser;
   } catch (error) {
-    logger.error('增加用户失败', error);
-    throw error;  // 抛出错误以便外部处理
+    logger.error('增加用户失败', { error, UserName });
+    throw error;
   }
 };
 
 
 // 增加设备
-db.addDevice = async (userId, deviceName) => {
+db.addDevice = async (userId, deviceName, status) => {
   try {
     const user = await db.User.findByPk(userId);
-    if (!user) throw new Error('用户不存在');
-
-    const newDevice = await db.Device.create({ device: deviceName, userId });
+    if (!user) { 
+      console.log('用户不存在');
+      throw new Error('用户不存在'); // 添加错误抛出，确保处理流程中断
+    }
+    const newDevice = await db.Device.create({ userId, device: deviceName, status });
     return newDevice;
   } catch (error) {
     logger.error('增加用户设备失败', error);
@@ -153,14 +157,14 @@ db.addDevice = async (userId, deviceName) => {
   }
 };
 
-// 查询用户所有设备的状态
-db.getDevicesStatus = async (userId) => {
+// 查询用户所有设备的状态（通过 name 查找）
+db.getDevicesStatus = async (name) => {
   try {
-    const user = await db.User.findByPk(userId);
-    if (!user) throw new Error('用户不存在');
+    const user = await db.User.findOne({ where: { name } });  // 使用 name 查找用户
+    if (!user) {console.log('用户不存在');return}
 
-    const devices = await db.Device.findAll({ where: { userId } });
-    if (devices.length === 0) throw new Error('该用户没有设备');
+    const devices = await db.Device.findAll({ where: { userId: user.userId } });  // 按照 userId 查找设备
+    if (devices.length === 0) {console.log("该用户没有设备");return}
 
     return devices.map(device => {
       // 确保 updatedAt 为有效日期对象
@@ -188,38 +192,29 @@ db.getDevicesStatus = async (userId) => {
   }
 };
 
-
+// 初始化数据库
 async function initDatabase() {
   try {
-    console.log('初始化开始');
-    
     const sequelize = setupDatabaseConnection();
-    console.log('数据库连接已建立');
-    
-    await authenticateDatabase(sequelize); // 确保认证完成
-    defineModels(sequelize);              // 同步操作
-    await syncDatabase(sequelize);        // 等待同步完成
-    
-    // 将sequelize实例挂载到db
+    await authenticateDatabase(sequelize);
+    defineModels(sequelize);
+    await syncDatabase(sequelize);
     db.sequelize = sequelize;
     db.Sequelize = Sequelize;
-    
-    console.log('初始化结果 db.User:', db.User);
     return db;
   } catch (err) {
-    console.error('初始化错误:', err);
-    throw err; // 确保错误能传递到外层
+    logger.error('初始化错误:', err);
+    throw err;
   }
 }
 
-// db.js 模块
-module.exports = (async () => {
+module.exports = async () => {
   try {
-    const sequelize = await initDatabase(); // 确保初始化完成
-    return sequelize; // 返回已初始化的 sequelize 实例
+    const dbInstance = await initDatabase();
+    return dbInstance; // 返回初始化完成后的 dbInstance
   } catch (err) {
-    console.error('数据库初始化错误:', err);
-    throw err; // 确保错误被抛出，供外部处理
+    logger.error('数据库初始化错误:', err);
+    throw err;
   }
-})();
+};
 
