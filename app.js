@@ -4,9 +4,28 @@ const http = require('http');
 const WebSocket = require('ws');
 const logger = require('./log');
 const utils = require('./utils');
+const db = require('./db');
+
+// 初始化应用
 const app = express();
 const server = http.createServer(app);
 const wss = new WebSocket.Server({ server });
+
+let usersCache = [];
+
+// 异步启动函数
+async function startServer() {
+    try {
+      // 启动服务器
+      server.listen(config.port, config.host, () => {
+        logger.info(`🚀 Server running at http://${config.host}:${config.port}`);
+        fetchUsersCache(); // 安全调用
+      });
+    } catch (err) {
+      logger.error('🔥 服务器启动失败', err);
+      process.exit(1);
+    }
+  }
 
 // 处理 WebSocket 连接
 wss.on('connection', ws => {
@@ -29,12 +48,9 @@ wss.on('connection', ws => {
     };
     sendInitialStatus();
     // 断开连接时清理资源
-    ws.on('close', () => {
-        clearInterval(statusUpdateInterval);  // 清除定时器
-    });
+
 });
 
-let usersCache = []; // 用于缓存查询结果的全局变量
 
 // 获取用户数据（从缓存或数据库）
 async function fetchUsersCache() {
@@ -116,8 +132,5 @@ app.get('/:username/device/set', async (req, res) => {
     }
 });
 
-// 启动 HTTP 和 WebSocket 服务
-server.listen(config.port, config.host, () => {
-    logger.info(`🚀 Server running at http://${config.host}:${config.port}`);
-    fetchUsersCache();  // 启动时加载用户数据
-});
+// 启动服务
+startServer();

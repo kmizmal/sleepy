@@ -122,6 +122,22 @@ async function syncDatabase(sequelize) {
     console.error('数据库同步异常', err);
   }
 }
+// 增加用户
+db.addUser = async (UserName) => {
+  try {
+    // 查询用户是否已存在
+    const user = await db.User.findOne({ where: { name: UserName } });  // 使用 where 进行查询
+    if (user) throw new Error('用户已存在');  // 用户已存在，抛出错误
+
+    // 创建新用户
+    const newUser = await db.User.create({ name: UserName });  // 创建新用户时，确保字段名正确
+    return newUser;
+  } catch (error) {
+    logger.error('增加用户失败', error);
+    throw error;  // 抛出错误以便外部处理
+  }
+};
+
 
 // 增加设备
 db.addDevice = async (userId, deviceName) => {
@@ -146,53 +162,64 @@ db.getDevicesStatus = async (userId) => {
     const devices = await db.Device.findAll({ where: { userId } });
     if (devices.length === 0) throw new Error('该用户没有设备');
 
-    return devices.map(device => ({
-      deviceName: device.device,
-      status: device.status,
-      updatedAt: device.updatedAt.toLocaleString('zh-CN', {
-        timeZone: 'Asia/Shanghai',
-        year: 'numeric',
-        month: 'long',
-        day: 'numeric',
-        hour: '2-digit',
-        minute: '2-digit',
-        second: '2-digit',
-      }),
-    }));
+    return devices.map(device => {
+      // 确保 updatedAt 为有效日期对象
+      const updatedAt = device.updatedAt instanceof Date
+        ? device.updatedAt.toLocaleString('zh-CN', {
+            timeZone: 'Asia/Shanghai',
+            year: 'numeric',
+            month: 'long',
+            day: 'numeric',
+            hour: '2-digit',
+            minute: '2-digit',
+            second: '2-digit',
+          })
+        : '未知';
+
+      return {
+        deviceName: device.device,
+        status: device.status,
+        updatedAt,
+      };
+    });
   } catch (error) {
     logger.error('查询用户设备状态失败', error);
     throw error;
   }
 };
 
-async function init() {
+
+async function initDatabase() {
   try {
     console.log('初始化开始');
     
     const sequelize = setupDatabaseConnection();
     console.log('数据库连接已建立');
     
-    await authenticateDatabase(sequelize);
-    console.log('数据库认证成功');
+    await authenticateDatabase(sequelize); // 确保认证完成
+    defineModels(sequelize);              // 同步操作
+    await syncDatabase(sequelize);        // 等待同步完成
     
-    // 在认证成功后定义模型
-    defineModels(sequelize);
-    console.log('模型已定义');
+    // 将sequelize实例挂载到db
+    db.sequelize = sequelize;
+    db.Sequelize = Sequelize;
     
-    await syncDatabase(sequelize);
-    console.log('数据库同步成功');
-    
-    console.log('初始化结果 db.User:', db.User);  // 确保 db.User 已经被定义
+    console.log('初始化结果 db.User:', db.User);
+    return db;
   } catch (err) {
-    console.error('初始化过程中发生错误:', err);
+    console.error('初始化错误:', err);
+    throw err; // 确保错误能传递到外层
   }
 }
 
-// 调用 init 函数并确保之后才执行其他操作
-init().then(() => {
-  console.log("数据库初始化成功，db.User:", db.User);
-}).catch(err => {
-  console.error('初始化失败', err);
-});
+// db.js 模块
+module.exports = (async () => {
+  try {
+    const sequelize = await initDatabase(); // 确保初始化完成
+    return sequelize; // 返回已初始化的 sequelize 实例
+  } catch (err) {
+    console.error('数据库初始化错误:', err);
+    throw err; // 确保错误被抛出，供外部处理
+  }
+})();
 
-module.exports = db;
