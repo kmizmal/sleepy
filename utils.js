@@ -2,15 +2,22 @@ const bcrypt = require('bcrypt');
 const db = require('./db');
 const WebSocket = require('ws');
 
-async function updateStatus(ws, updatedAt, deviceArray) {
-  ws.send(JSON.stringify({
-    status_name: "在线",
-    status_desc: "服务器一切正常",
-    last_updated: updatedAt,
-    status_color: "green",
-    device: deviceArray
-  }));
+async function updateStatus(wss, updatedAt, deviceArray) {
+  // 遍历所有连接的 WebSocket 客户端
+  console.log("发送状态？")
+  wss.clients.forEach(ws => {
+    if (ws.readyState === WebSocket.OPEN) {  // 确保连接处于打开状态
+      ws.send(JSON.stringify({
+        status_name: "在线",
+        status_desc: "服务器一切正常",
+        last_updated: updatedAt,
+        status_color: "green",
+        device: deviceArray
+      }));
+    }
+  });
 }
+
 
 // 获取用户数据（从缓存或数据库）
 let usersCache = []; // 用于缓存查询结果的全局变量

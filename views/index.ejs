@@ -37,6 +37,7 @@
         ws.onmessage = (event) => {
             try {
                 const data = JSON.parse(event.data);
+                console.log(data);
                 document.getElementById('status').innerText = data.status_name;
                 document.getElementById('additional-info').innerText = data.status_desc;
                 document.getElementById('last-updated').innerText = "最后更新: " + data.last_updated;

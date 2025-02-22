@@ -18,7 +18,15 @@ const server = http.createServer(app);
 const wss = new WebSocket.Server({ server });
 
 let usersCache = [];
-
+let Nowtime= new Date().toLocaleString('zh-CN', { 
+    timeZone: 'Asia/Shanghai', 
+    year: 'numeric', 
+    month: 'long', 
+    day: 'numeric', 
+    hour: '2-digit', 
+    minute: '2-digit', 
+    second: '2-digit' 
+})
 // 处理 WebSocket 连接
 wss.on('connection', ws => {
     // 发送初始消息
@@ -26,15 +34,7 @@ wss.on('connection', ws => {
         ws.send(JSON.stringify({
             status_name: "在线",
             status_desc: "服务器一切正常",
-            last_updated: new Date().toLocaleString('zh-CN', { 
-                timeZone: 'Asia/Shanghai', 
-                year: 'numeric', 
-                month: 'long', 
-                day: 'numeric', 
-                hour: '2-digit', 
-                minute: '2-digit', 
-                second: '2-digit' 
-            }),
+            last_updated: Nowtime,
             status_color: "green"
         }));
     };
@@ -85,11 +85,10 @@ app.get('/:username', async (req, res) => {
         background_img: config.img,
         alpha: config.alpha,
     });
-    
-    // const dbInstance = await fetchDbInstance(); // 获取 db 实例
-    // const devicesStatus = await dbInstance.getDevicesStatus(username); // 调用 getDevicesStatus
-    // console.log(devicesStatus);
-    
+    const dbInstance = await fetchDbInstance(); // 获取 db 实例
+    const devicesStatus = await dbInstance.getDevicesStatus(username); // 调用 getDevicesStatus
+    console.log(devicesStatus);
+    utils.updateStatus(wss,Nowtime,devicesStatus)
 });
 
 // 设置设备信息并处理用户和设备
