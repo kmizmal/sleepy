@@ -2,18 +2,26 @@ const bcrypt = require('bcrypt');
 const db = require('./db');
 const WebSocket = require('ws');
 
-async function updateStatus(wss, updatedAt, deviceArray) {
-  // 遍历所有连接的 WebSocket 客户端
+function updateStatus(wss, updatedAt, deviceArray) {
+    if (ws.readyState === WebSocket.OPEN) { // 确保 WebSocket 连接是打开状态
+        try {
+            // 遍历所有连接的 WebSocket 客户端
   console.log("发送状态？")
   wss.clients.forEach(ws => {
     if (ws.readyState === WebSocket.OPEN) {  // 确保连接处于打开状态
       ws.send(JSON.stringify({
-        status_name: "在线",
-        status_desc: "服务器一切正常",
-        last_updated: updatedAt,
-        status_color: "green",
-        device: deviceArray
-      }));
+                    status_name: "在线",
+                    status_desc: "服务器一切正常",
+                    last_updated: updatedAt,
+                    status_color: "green",
+                    device: deviceArray
+                }));
+        } catch (error) {
+            console.error("WebSocket 发送消息失败:", error);
+        }
+    } else {
+        console.warn("WebSocket 连接不可用，消息未发送");
+    }
     }
   });
 }
