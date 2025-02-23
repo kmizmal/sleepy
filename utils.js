@@ -2,14 +2,22 @@ const bcrypt = require('bcrypt');
 const db = require('./db');
 const WebSocket = require('ws');
 
-async function updateStatus(ws, updatedAt, deviceArray) {
-  ws.send(JSON.stringify({
-    status_name: "在线",
-    status_desc: "服务器一切正常",
-    last_updated: updatedAt,
-    status_color: "green",
-    device: deviceArray
-  }));
+function updateStatus(ws, updatedAt, deviceArray) {
+    if (ws.readyState === WebSocket.OPEN) { // 确保 WebSocket 连接是打开状态
+        try {
+            ws.send(JSON.stringify({
+                status_name: "在线",
+                status_desc: "服务器一切正常",
+                last_updated: updatedAt,
+                status_color: "green",
+                device: deviceArray
+            }));
+        } catch (error) {
+            console.error("WebSocket 发送消息失败:", error);
+        }
+    } else {
+        console.warn("WebSocket 连接不可用，消息未发送");
+    }
 }
 
 let usersCache = []; // 用于缓存查询结果的全局变量
