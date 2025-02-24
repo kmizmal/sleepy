@@ -61,6 +61,7 @@ function defineModels(sequelize) {
       type: Sequelize.INTEGER,
       primaryKey: true,
       autoIncrement: true,
+      comment: 'sleepy用户id'
     },
     name: {
       type: Sequelize.STRING,
