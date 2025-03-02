@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>
+        <%= user %> Alive?
+    </title>
+    <meta name="description" content="<%= user %>'s Online Status Page">
+    <link rel="stylesheet" href="/style.css">
+    <link rel="icon" href="/zmal.png" type="image/x-icon">
+    <style>
+        body {
+            background: url('<%= background_img %>') no-repeat center center fixed;
+        }
+
+        .card {
+            background-color: aliceblue;
+            border-radius: 30px;
+            padding: 2rem 1rem;
+            margin: 1rem auto;
+            width: 40%;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+            text-align: center;
+            font-size: 1.1em;
+            opacity: <%=alpha %>;
+        }
+    </style>
+</head>
+
+<body>
+
+
+
+    <div class="container">
+        <div class="card" id="user_status">
+            <h1><ruby>似<rt>sǐ</rt></ruby>了吗?</h1> <!-- 似死了吗? -->
+            <h3><i><b>
+                        <%= user %>'s
+                    </b></i> Status:<br> <!-- 用户状态 -->
+                <a id="status" style="font-size: 1.2em;"></a> <!-- 状态名称 -->
+            </h3>
+            <p id="additional-info" style="font-size: 1em;"></p> <!-- 状态描述 -->
+            <div id="device-status"></div> <!-- 设备状态列表 -->
+            <p id="last-updated"></p> <!-- 最后更新时间 -->
+        </div>
+
+        <div class="card" id="more_text">
+            <div>
+                <p id="hitokoto">
+                    <a href="#" id="hitokoto_text"></a>
+                </p>
+                <script>
+                    const hitokoto_enabled = '<%= hitokoto %>';
+                    const hitokotoElement = document.querySelector('#hitokoto_text');
+                    if (hitokoto_enabled == true) {
+                        // console.log('Hitokoto enabled'); // 一言启用
+                        fetch('https://v1.hitokoto.cn')
+                            .then(response => response.json())
+                            .then(data => {
+                                hitokotoElement.href = `https://hitokoto.cn/?uuid=${data.uuid}`;
+                                hitokotoElement.innerText = data.hitokoto;
+                            })
+                            .catch(console.error);
+                    }
+                </script>
+            </div>
+
+            <p>你可以通过这个页面视奸 <b>
+                    <%= user %>
+                </b>。 <!-- 你可以通过这个页面查看用户 -->
+                <br>
+                <a href="<%= repo %>" target="_blank" style="color: rgb(0, 255, 0);">
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"
+                        style="vertical-align: middle; width: 1em;">
+                        <path
+                            d="M320 0c-17.7 0-32 14.3-32 32s14.3 32 32 32h82.7L201.4 265.4c-12.5 12.5-12.5 32.8 0 45.3s32.8 12.5 45.3 0L448 109.3V192c0 17.7 14.3 32 32 32s32-14.3 32-32V32c0-17.7-14.3-32-32-32H320zM80 32C35.8 32 0 67.8 0 112V432c0 44.2 35.8 80 80 80H400c44.2 0 80-35.8 80-80V320c0-17.7-14.3-32-32-32s-32 14.3-32 32V432c0 8.8-7.2 16-16 16H80c-8.8 0-16-7.2-16-16V112c0-8.8 7.2-16 16-16H192c17.7 0 32-14.3 32-32s-14.3-32-32-32H80z" />
+                    </svg>
+                </a>
+            </p>
+        </div>
+    </div>
+    <% if (canvas) { %><script src="/canvas.js" defer></script><% } %>
+            <script>
+                // WebSocket 连接创建函数
+                function createWebSocket() {
+                    const protocol = location.protocol === 'https:' ? 'wss' : 'ws';
+                    const wsUrl = `${protocol}://${location.host}`;
+                    const ws = new WebSocket(wsUrl);
+
+                    // 处理 WebSocket 连接关闭事件
+                    ws.onclose = (event) => {
+                        console.log('连接断开5秒后重新连接', event);
+                        setTimeout(createWebSocket, 5000); // 5秒后重新连接
+                    };
+
+                    // 处理 WebSocket 消息
+                    ws.onmessage = (event) => {
+                        try {
+                            const data = JSON.parse(event.data);
+                            console.log(data);
+                            document.getElementById('status').innerText = data.status_name;
+                            document.getElementById('additional-info').innerText = data.status_desc;
+                            document.getElementById('last-updated').innerText = "最后更新: " + data.last_updated;
+                            document.getElementById('status').classList = '';
+                            document.getElementById('status').classList.add(data.status_color);
+
+                            const statusContainer = document.getElementById('device-status'); // 获取 div
+                            statusContainer.innerHTML = '[设备状态列表]'; // 清空 div
+                            // 确保 device 存在并是对象
+                            if (Array.isArray(data.device)) {
+                                data.device.forEach(device => {
+                                    const p = document.createElement('p');
+                                    p.innerText = `${device.show_name}: ${device.app_name}`;
+                                    statusContainer.appendChild(p);
+                                });
+                            }
+
+                        } catch (error) {
+                            console.error('WebSocket消息解析失败:', error);
+                        }
+                    };
+                }
+
+                // 初次连接 WebSocket
+                createWebSocket();
+            </script>
+</body>
+
+</html>

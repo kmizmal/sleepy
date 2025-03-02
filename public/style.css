@@ -1,0 +1,46 @@
+
+rt {
+    font-size: 0.6em;
+}
+
+a {
+    text-decoration: none;
+}
+
+#last-updated {
+    font-size: 0.9em;
+}
+
+.card p {
+    font-size: 1.2em;
+    margin: 1rem;
+}
+.container {
+    padding: 1rem;
+}
+
+@media (max-width: 700px) {
+    body {
+        touch-action: pan-y;
+    }
+    .card{
+        width: 90%;
+    }
+}
+
+.sleeping {
+    color: gray;
+}
+
+.awake {
+    color: rgb(16, 128, 0);
+}
+
+.error {
+    color: red;
+}
+
+
+#hitokoto_text {
+    color: rgba(237, 202, 242, 0.719);
+}
